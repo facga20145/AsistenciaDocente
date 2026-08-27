@@ -13,8 +13,7 @@ export class MarcarAusentesTardanzasUseCase {
     hoy.setHours(0, 0, 0, 0);
 
     const ahora = new Date();
-    const margenTardanza = new Date(ahora);
-    margenTardanza.setMinutes(margenTardanza.getMinutes() - 15);
+    const ahoraMs = this.msDesdeMedianoche(ahora);
 
     const sesionesVencidas = await this.sesionRepo.listarProgramadasVencidas(hoy, ahora);
 
@@ -22,16 +21,24 @@ export class MarcarAusentesTardanzasUseCase {
     let ausentes = 0;
 
     for (const sesion of sesionesVencidas) {
-      const horaInicio = new Date(sesion.horaInicioProgramada);
-      if (horaInicio > margenTardanza) {
-        await this.sesionRepo.actualizarEstado(sesion.id, 'TARDANZA');
-        tardanzas++;
-      } else {
+      const inicioMs = this.msDesdeMedianoche(sesion.horaInicioProgramada);
+      const finMs = this.msDesdeMedianoche(sesion.horaFinProgramada);
+
+      // La clase completa ya pasó sin iniciarse → AUSENTE
+      if (ahoraMs >= finMs) {
         await this.sesionRepo.actualizarEstado(sesion.id, 'AUSENTE');
         ausentes++;
+      } else {
+        // Todavía está dentro del rango de la clase → TARDANZA (aún puede iniciar)
+        await this.sesionRepo.actualizarEstado(sesion.id, 'TARDANZA');
+        tardanzas++;
       }
     }
 
     return { tardanzas, ausentes };
+  }
+
+  private msDesdeMedianoche(fecha: Date): number {
+    return fecha.getHours() * 3_600_000 + fecha.getMinutes() * 60_000 + fecha.getSeconds() * 1_000;
   }
 }
