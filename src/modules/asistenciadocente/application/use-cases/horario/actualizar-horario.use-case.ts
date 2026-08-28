@@ -1,10 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { HorarioEntity } from '../../../domain/entities/horario.entity';
+import { HorarioResponseDto } from '../../dtos/horario/horario-response.dto';
 import { HorarioRepositoryPort } from '../../../infrastructure/adapters/ports/horario.repository.port';
 import { ActualizarHorarioDto } from '../../dtos/horario/actualizar-horario.dto';
 import { NotFoundError } from '../../../../../common/errors/not-found.error';
 import { ConflictError } from '../../../../../common/errors/conflict.error';
 import { BusinessError } from '../../../../../common/errors/business.error';
+import { compararHoras, parseHora } from '../../utils/datetime.util';
 
 @Injectable()
 export class ActualizarHorarioUseCase {
@@ -13,7 +14,7 @@ export class ActualizarHorarioUseCase {
     private readonly horarioRepo: HorarioRepositoryPort,
   ) {}
 
-  async execute(id: number, dto: ActualizarHorarioDto): Promise<HorarioEntity> {
+  async execute(id: number, dto: ActualizarHorarioDto): Promise<HorarioResponseDto> {
     const existente = await this.horarioRepo.buscarPorId(id);
     if (!existente) {
       throw new NotFoundError(`Horario con id ${id} no encontrado`);
@@ -22,10 +23,10 @@ export class ActualizarHorarioUseCase {
     const docenteId = dto.docenteId ?? existente.docenteId;
     const aulaId = dto.aulaId ?? existente.aulaId;
     const diaSemana = dto.diaSemana ?? existente.diaSemana;
-    const horaInicio = dto.horaInicio ? new Date(dto.horaInicio) : existente.horaInicio;
-    const horaFin = dto.horaFin ? new Date(dto.horaFin) : existente.horaFin;
+    const horaInicio = dto.horaInicio ? parseHora(dto.horaInicio) : existente.horaInicio;
+    const horaFin = dto.horaFin ? parseHora(dto.horaFin) : existente.horaFin;
 
-    if (horaFin <= horaInicio) {
+    if (compararHoras(horaFin, horaInicio) <= 0) {
       throw new BusinessError('La hora de fin debe ser posterior a la hora de inicio');
     }
 
@@ -60,10 +61,10 @@ export class ActualizarHorarioUseCase {
     if (dto.cursoId !== undefined) data.cursoId = dto.cursoId;
     if (dto.aulaId !== undefined) data.aulaId = dto.aulaId;
     if (dto.diaSemana !== undefined) data.diaSemana = dto.diaSemana;
-    if (dto.horaInicio !== undefined) data.horaInicio = new Date(dto.horaInicio);
-    if (dto.horaFin !== undefined) data.horaFin = new Date(dto.horaFin);
+    if (dto.horaInicio !== undefined) data.horaInicio = parseHora(dto.horaInicio);
+    if (dto.horaFin !== undefined) data.horaFin = parseHora(dto.horaFin);
     if (dto.activo !== undefined) data.activo = dto.activo;
 
-    return this.horarioRepo.actualizar(id, data);
+    return HorarioResponseDto.fromEntity(await this.horarioRepo.actualizar(id, data));
   }
 }

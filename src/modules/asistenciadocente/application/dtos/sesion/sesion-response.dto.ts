@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { EstadoSesion } from '@prisma/client';
+import {
+  calcularMinutosTrabajados,
+  formatFecha,
+  formatFechaHora,
+  formatHora,
+} from '../../utils/datetime.util';
 
 export class SesionClaseResponseDto {
   @ApiProperty({ example: 1 })
@@ -8,23 +14,30 @@ export class SesionClaseResponseDto {
   @ApiProperty({ example: 1 })
   horarioId: number;
 
-  @ApiProperty({ example: '2026-08-26' })
-  fecha: Date;
+  @ApiProperty({ example: '28/08/2026', description: 'Formato dd/mm/yyyy' })
+  fecha: string;
 
-  @ApiProperty({ example: '08:00:00' })
+  @ApiProperty({ example: '09:00', description: 'Formato HH:mm' })
   horaInicioProgramada: string;
 
-  @ApiProperty({ example: '10:00:00' })
+  @ApiProperty({ example: '11:00', description: 'Formato HH:mm' })
   horaFinProgramada: string;
 
   @ApiProperty({ enum: EstadoSesion, example: EstadoSesion.PROGRAMADA })
   estado: EstadoSesion;
 
-  @ApiProperty({ example: null, nullable: true })
-  horaEntradaReal: Date | null;
+  @ApiProperty({ example: null, nullable: true, description: 'Formato dd/mm/yyyy HH:mm:ss' })
+  horaEntradaReal: string | null;
 
-  @ApiProperty({ example: null, nullable: true })
-  horaSalidaReal: Date | null;
+  @ApiProperty({ example: null, nullable: true, description: 'Formato dd/mm/yyyy HH:mm:ss' })
+  horaSalidaReal: string | null;
+
+  @ApiProperty({
+    example: 120,
+    nullable: true,
+    description: 'Minutos entre horaEntradaReal y horaSalidaReal (para reportes)',
+  })
+  minutosTrabajados: number | null;
 
   @ApiProperty({
     example: { id: 1, nombres: 'Juan Carlos', apellidos: 'Pérez López' },
@@ -55,12 +68,20 @@ export class SesionClaseResponseDto {
     const dto = new SesionClaseResponseDto();
     dto.id = sesion.id;
     dto.horarioId = sesion.horarioId;
-    dto.fecha = sesion.fecha;
-    dto.horaInicioProgramada = sesion.horaInicioProgramada;
-    dto.horaFinProgramada = sesion.horaFinProgramada;
+    dto.fecha = formatFecha(sesion.fecha);
+    dto.horaInicioProgramada = formatHora(sesion.horaInicioProgramada);
+    dto.horaFinProgramada = formatHora(sesion.horaFinProgramada);
     dto.estado = sesion.estado;
-    dto.horaEntradaReal = sesion.horaEntradaReal;
-    dto.horaSalidaReal = sesion.horaSalidaReal;
+    dto.horaEntradaReal = sesion.horaEntradaReal
+      ? formatFechaHora(sesion.horaEntradaReal)
+      : null;
+    dto.horaSalidaReal = sesion.horaSalidaReal
+      ? formatFechaHora(sesion.horaSalidaReal)
+      : null;
+    dto.minutosTrabajados = calcularMinutosTrabajados(
+      sesion.horaEntradaReal,
+      sesion.horaSalidaReal,
+    );
     if (sesion.horario) {
       dto.docente = {
         id: sesion.horario.docente.id,

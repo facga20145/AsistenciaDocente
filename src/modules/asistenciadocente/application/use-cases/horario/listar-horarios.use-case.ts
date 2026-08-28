@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { HorarioEntity } from '../../../domain/entities/horario.entity';
+import { HorarioResponseDto } from '../../dtos/horario/horario-response.dto';
 import { HorarioRepositoryPort } from '../../../infrastructure/adapters/ports/horario.repository.port';
 
 @Injectable()
@@ -9,7 +9,8 @@ export class ListarHorariosUseCase {
     private readonly horarioRepo: HorarioRepositoryPort,
   ) {}
 
-  async execute(): Promise<HorarioEntity[]> {
-    return this.horarioRepo.listar();
+  async execute(): Promise<HorarioResponseDto[]> {
+    const horarios = await this.horarioRepo.listar();
+    return horarios.map((h) => HorarioResponseDto.fromEntity(h));
   }
 }

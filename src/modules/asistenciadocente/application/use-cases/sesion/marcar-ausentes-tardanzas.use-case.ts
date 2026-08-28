@@ -1,5 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { SesionClaseRepositoryPort } from '../../../infrastructure/adapters/ports/sesion-clase.repository.port';
+import {
+  TOLERANCIA_TARDANZA_MS,
+  hoyParaDb,
+  msDesdeMedianocheLocal,
+  msDesdeMedianochePrismaTime,
+} from '../../utils/datetime.util';
 
 @Injectable()
 export class MarcarAusentesTardanzasUseCase {
@@ -9,36 +15,33 @@ export class MarcarAusentesTardanzasUseCase {
   ) {}
 
   async execute(): Promise<{ tardanzas: number; ausentes: number }> {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-
+    const hoy = hoyParaDb();
     const ahora = new Date();
-    const ahoraMs = this.msDesdeMedianoche(ahora);
+    const ahoraMs = msDesdeMedianocheLocal(ahora);
 
-    const sesionesVencidas = await this.sesionRepo.listarProgramadasVencidas(hoy, ahora);
+    const sesiones = await this.sesionRepo.listarSinIniciarConInicioPasado(hoy, ahora);
 
     let tardanzas = 0;
     let ausentes = 0;
 
-    for (const sesion of sesionesVencidas) {
-      const inicioMs = this.msDesdeMedianoche(sesion.horaInicioProgramada);
-      const finMs = this.msDesdeMedianoche(sesion.horaFinProgramada);
+    for (const sesion of sesiones) {
+      const inicioMs = msDesdeMedianochePrismaTime(sesion.horaInicioProgramada);
+      const finMs = msDesdeMedianochePrismaTime(sesion.horaFinProgramada);
+      const limiteAusenteMs = inicioMs + TOLERANCIA_TARDANZA_MS;
 
-      // La clase completa ya pasó sin iniciarse → AUSENTE
-      if (ahoraMs >= finMs) {
-        await this.sesionRepo.actualizarEstado(sesion.id, 'AUSENTE');
-        ausentes++;
-      } else {
-        // Todavía está dentro del rango de la clase → TARDANZA (aún puede iniciar)
+      // Pasó la hora de fin O superó 30 min de tolerancia sin iniciar → AUSENTE
+      if (ahoraMs >= finMs || ahoraMs >= limiteAusenteMs) {
+        if (sesion.estado !== 'AUSENTE') {
+          await this.sesionRepo.actualizarEstado(sesion.id, 'AUSENTE');
+          ausentes++;
+        }
+      } else if (sesion.estado === 'PROGRAMADA') {
+        // Entre hora de inicio y los 30 min → TARDANZA (aún puede iniciar)
         await this.sesionRepo.actualizarEstado(sesion.id, 'TARDANZA');
         tardanzas++;
       }
     }
 
     return { tardanzas, ausentes };
-  }
-
-  private msDesdeMedianoche(fecha: Date): number {
-    return fecha.getHours() * 3_600_000 + fecha.getMinutes() * 60_000 + fecha.getSeconds() * 1_000;
   }
 }

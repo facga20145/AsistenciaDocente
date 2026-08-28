@@ -1,6 +1,7 @@
-import { IsInt, IsEnum, IsDateString } from 'class-validator';
+import { IsInt, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { DiaSemana } from '@prisma/client';
+import { IsHora } from '../../../../../common/validators/is-hora.decorator';
 
 export class CrearHorarioDto {
   @ApiProperty({ example: 1, description: 'ID del docente' })
@@ -19,11 +20,11 @@ export class CrearHorarioDto {
   @IsEnum(DiaSemana)
   diaSemana: DiaSemana;
 
-  @ApiProperty({ example: '1970-01-01T08:00:00.000Z', description: 'Hora de inicio (ISO Time)' })
-  @IsDateString()
+  @ApiProperty({ example: '09:00', description: 'Hora de inicio (HH:mm)' })
+  @IsHora()
   horaInicio: string;
 
-  @ApiProperty({ example: '1970-01-01T10:00:00.000Z', description: 'Hora de fin (ISO Time)' })
-  @IsDateString()
+  @ApiProperty({ example: '11:00', description: 'Hora de fin (HH:mm)' })
+  @IsHora()
   horaFin: string;
 }

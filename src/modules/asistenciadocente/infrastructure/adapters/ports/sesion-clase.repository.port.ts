@@ -17,5 +17,5 @@ export abstract class SesionClaseRepositoryPort {
     horaEntradaReal?: Date,
     horaSalidaReal?: Date,
   ): Promise<SesionClaseEntity>;
-  abstract listarProgramadasVencidas(fecha: Date, horaLimite: Date): Promise<SesionClaseEntity[]>;
+  abstract listarSinIniciarConInicioPasado(fecha: Date, horaLimite: Date): Promise<SesionClaseEntity[]>;
 }

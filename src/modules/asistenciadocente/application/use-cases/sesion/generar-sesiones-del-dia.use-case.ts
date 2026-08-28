@@ -3,6 +3,7 @@ import { DiaSemana } from '@prisma/client';
 import { SesionClaseEntity } from '../../../domain/entities/sesion-clase.entity';
 import { SesionClaseRepositoryPort } from '../../../infrastructure/adapters/ports/sesion-clase.repository.port';
 import { HorarioRepositoryPort } from '../../../infrastructure/adapters/ports/horario.repository.port';
+import { hoyParaDb } from '../../utils/datetime.util';
 
 @Injectable()
 export class GenerarSesionesDelDiaUseCase {
@@ -14,8 +15,8 @@ export class GenerarSesionesDelDiaUseCase {
   ) {}
 
   async execute(fecha?: Date): Promise<SesionClaseEntity[]> {
-    const hoy = fecha || new Date();
-    const diaSemana = this.obtenerDiaSemana(hoy);
+    const hoy = fecha ?? hoyParaDb();
+    const diaSemana = this.obtenerDiaSemana(new Date());
 
     const horarios = await this.horarioRepo.listarActivosPorDia(diaSemana);
     const sesionesCreadas: SesionClaseEntity[] = [];

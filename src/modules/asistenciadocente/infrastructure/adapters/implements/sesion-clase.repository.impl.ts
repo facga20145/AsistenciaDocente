@@ -3,6 +3,10 @@ import { EstadoSesion } from '@prisma/client';
 import { SesionClaseEntity } from '../../../domain/entities/sesion-clase.entity';
 import { SesionClaseRepositoryPort } from '../ports/sesion-clase.repository.port';
 import { PrismaService } from '../../config/prisma.service';
+import {
+  msDesdeMedianocheLocal,
+  msDesdeMedianochePrismaTime,
+} from '../../../application/utils/datetime.util';
 
 @Injectable()
 export class PrismaSesionClaseRepository implements SesionClaseRepositoryPort {
@@ -63,15 +67,24 @@ export class PrismaSesionClaseRepository implements SesionClaseRepositoryPort {
     return new SesionClaseEntity(sesion);
   }
 
-  async listarProgramadasVencidas(fecha: Date, horaLimite: Date): Promise<SesionClaseEntity[]> {
+  async listarSinIniciarConInicioPasado(
+    fecha: Date,
+    horaLimite: Date,
+  ): Promise<SesionClaseEntity[]> {
+    const limiteMs = msDesdeMedianocheLocal(horaLimite);
+
     const sesiones = await this.prisma.sesionClase.findMany({
       where: {
         fecha,
-        estado: 'PROGRAMADA',
-        horaInicioProgramada: { lt: horaLimite },
+        estado: { in: ['PROGRAMADA', 'TARDANZA'] },
       },
       include: { horario: { include: { docente: true, curso: true, aula: true } } },
     });
-    return sesiones.map((s) => new SesionClaseEntity(s));
+
+    return sesiones
+      .filter(
+        (s) => msDesdeMedianochePrismaTime(s.horaInicioProgramada) < limiteMs,
+      )
+      .map((s) => new SesionClaseEntity(s));
   }
 }

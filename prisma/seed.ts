@@ -2,6 +2,15 @@ import { PrismaClient, DiaSemana, EstadoSesion } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+/** Prisma @db.Time guarda la hora en UTC — usar siempre Date.UTC para evitar desfase. */
+function timeUTC(h: number, m = 0, s = 0): Date {
+  return new Date(Date.UTC(1970, 0, 1, h, m, s));
+}
+
+function dateUTC(y: number, mo: number, d: number): Date {
+  return new Date(Date.UTC(y, mo - 1, d));
+}
+
 async function main() {
   console.log('Limpiando datos existentes...');
   await prisma.sesionClase.deleteMany();
@@ -35,30 +44,46 @@ async function main() {
   const docentes = [d1, d2, d3, d4, d5];
 
   console.log('Creando horarios para HOY (MIÉRCOLES 26)...');
-  const h1 = await prisma.horario.create({ data: { docenteId: d1.id, cursoId: c1.id, aulaId: a1.id, diaSemana: DiaSemana.MIERCOLES, horaInicio: new Date('1970-01-01T08:00:00'), horaFin: new Date('1970-01-01T10:00:00') } });
-  const h2 = await prisma.horario.create({ data: { docenteId: d2.id, cursoId: c2.id, aulaId: a2.id, diaSemana: DiaSemana.MIERCOLES, horaInicio: new Date('1970-01-01T08:00:00'), horaFin: new Date('1970-01-01T10:00:00') } });
-  const h3 = await prisma.horario.create({ data: { docenteId: d3.id, cursoId: c3.id, aulaId: a3.id, diaSemana: DiaSemana.MIERCOLES, horaInicio: new Date('1970-01-01T10:00:00'), horaFin: new Date('1970-01-01T12:00:00') } });
-  const h4 = await prisma.horario.create({ data: { docenteId: d4.id, cursoId: c4.id, aulaId: a4.id, diaSemana: DiaSemana.MIERCOLES, horaInicio: new Date('1970-01-01T14:00:00'), horaFin: new Date('1970-01-01T16:00:00') } });
-  const h5 = await prisma.horario.create({ data: { docenteId: d5.id, cursoId: c5.id, aulaId: a5.id, diaSemana: DiaSemana.MIERCOLES, horaInicio: new Date('1970-01-01T16:00:00'), horaFin: new Date('1970-01-01T18:00:00') } });
+  const h1 = await prisma.horario.create({ data: { docenteId: d1.id, cursoId: c1.id, aulaId: a1.id, diaSemana: DiaSemana.MIERCOLES, horaInicio: timeUTC(8), horaFin: timeUTC(10) } });
+  const h2 = await prisma.horario.create({ data: { docenteId: d2.id, cursoId: c2.id, aulaId: a2.id, diaSemana: DiaSemana.MIERCOLES, horaInicio: timeUTC(8), horaFin: timeUTC(10) } });
+  const h3 = await prisma.horario.create({ data: { docenteId: d3.id, cursoId: c3.id, aulaId: a3.id, diaSemana: DiaSemana.MIERCOLES, horaInicio: timeUTC(10), horaFin: timeUTC(12) } });
+  const h4 = await prisma.horario.create({ data: { docenteId: d4.id, cursoId: c4.id, aulaId: a4.id, diaSemana: DiaSemana.MIERCOLES, horaInicio: timeUTC(14), horaFin: timeUTC(16) } });
+  const h5 = await prisma.horario.create({ data: { docenteId: d5.id, cursoId: c5.id, aulaId: a5.id, diaSemana: DiaSemana.MIERCOLES, horaInicio: timeUTC(16), horaFin: timeUTC(18) } });
 
   console.log('Creando horarios para MAÑANA (JUEVES 27)...');
-  const h6 = await prisma.horario.create({ data: { docenteId: d1.id, cursoId: c3.id, aulaId: a3.id, diaSemana: DiaSemana.JUEVES, horaInicio: new Date('1970-01-01T08:00:00'), horaFin: new Date('1970-01-01T10:00:00') } });
-  const h7 = await prisma.horario.create({ data: { docenteId: d2.id, cursoId: c1.id, aulaId: a1.id, diaSemana: DiaSemana.JUEVES, horaInicio: new Date('1970-01-01T10:00:00'), horaFin: new Date('1970-01-01T12:00:00') } });
-  const h8 = await prisma.horario.create({ data: { docenteId: d3.id, cursoId: c4.id, aulaId: a4.id, diaSemana: DiaSemana.JUEVES, horaInicio: new Date('1970-01-01T14:00:00'), horaFin: new Date('1970-01-01T16:00:00') } });
+  const h6 = await prisma.horario.create({ data: { docenteId: d1.id, cursoId: c3.id, aulaId: a3.id, diaSemana: DiaSemana.JUEVES, horaInicio: timeUTC(8), horaFin: timeUTC(10) } });
+  const h7 = await prisma.horario.create({ data: { docenteId: d2.id, cursoId: c1.id, aulaId: a1.id, diaSemana: DiaSemana.JUEVES, horaInicio: timeUTC(10), horaFin: timeUTC(12) } });
+  const h8 = await prisma.horario.create({ data: { docenteId: d3.id, cursoId: c4.id, aulaId: a4.id, diaSemana: DiaSemana.JUEVES, horaInicio: timeUTC(14), horaFin: timeUTC(16) } });
 
-  console.log('Generando sesiones para HOY (26 agosto 2026)...');
-  const hoy = new Date('2026-08-26');
+  console.log('Creando horarios para HOY (VIERNES 28)...');
+  const h9 = await prisma.horario.create({ data: { docenteId: d1.id, cursoId: c1.id, aulaId: a1.id, diaSemana: DiaSemana.VIERNES, horaInicio: timeUTC(7), horaFin: timeUTC(8, 30) } });
+  const h10 = await prisma.horario.create({ data: { docenteId: d2.id, cursoId: c2.id, aulaId: a2.id, diaSemana: DiaSemana.VIERNES, horaInicio: timeUTC(9), horaFin: timeUTC(11) } });
+  const h11 = await prisma.horario.create({ data: { docenteId: d3.id, cursoId: c3.id, aulaId: a3.id, diaSemana: DiaSemana.VIERNES, horaInicio: timeUTC(11), horaFin: timeUTC(13) } });
+  const h12 = await prisma.horario.create({ data: { docenteId: d4.id, cursoId: c4.id, aulaId: a4.id, diaSemana: DiaSemana.VIERNES, horaInicio: timeUTC(14), horaFin: timeUTC(16) } });
+  const h13 = await prisma.horario.create({ data: { docenteId: d5.id, cursoId: c5.id, aulaId: a5.id, diaSemana: DiaSemana.VIERNES, horaInicio: timeUTC(16), horaFin: timeUTC(18) } });
+  const horariosViernes = [h9, h10, h11, h12, h13];
+
+  console.log('Generando sesiones para miércoles 26...');
+  const miercoles = dateUTC(2026, 8, 26);
   for (const h of [h1, h2, h3, h4, h5]) {
     await prisma.sesionClase.create({
-      data: { horarioId: h.id, fecha: hoy, horaInicioProgramada: h.horaInicio, horaFinProgramada: h.horaFin, estado: EstadoSesion.PROGRAMADA },
+      data: { horarioId: h.id, fecha: miercoles, horaInicioProgramada: h.horaInicio, horaFinProgramada: h.horaFin, estado: EstadoSesion.PROGRAMADA },
     });
   }
 
-  console.log('Generando sesiones para MAÑANA (27 agosto 2026)...');
-  const manana = new Date('2026-08-27');
+  console.log('Generando sesiones para jueves 27...');
+  const jueves = dateUTC(2026, 8, 27);
   for (const h of [h6, h7, h8]) {
     await prisma.sesionClase.create({
-      data: { horarioId: h.id, fecha: manana, horaInicioProgramada: h.horaInicio, horaFinProgramada: h.horaFin, estado: EstadoSesion.PROGRAMADA },
+      data: { horarioId: h.id, fecha: jueves, horaInicioProgramada: h.horaInicio, horaFinProgramada: h.horaFin, estado: EstadoSesion.PROGRAMADA },
+    });
+  }
+
+  console.log('Generando sesiones para HOY (viernes 28 agosto 2026)...');
+  const hoy = dateUTC(2026, 8, 28);
+  for (const h of horariosViernes) {
+    await prisma.sesionClase.create({
+      data: { horarioId: h.id, fecha: hoy, horaInicioProgramada: h.horaInicio, horaFinProgramada: h.horaFin, estado: EstadoSesion.PROGRAMADA },
     });
   }
 
@@ -68,8 +93,10 @@ async function main() {
   console.log(`Docentes: ${docentes.length}`);
   console.log(`Horarios Miércoles: 5`);
   console.log(`Horarios Jueves: 3`);
-  console.log(`Sesiones hoy (26): 5`);
-  console.log(`Sesiones mañana (27): 3`);
+  console.log(`Horarios Viernes: ${horariosViernes.length}`);
+  console.log(`Sesiones miércoles (26): 5`);
+  console.log(`Sesiones jueves (27): 3`);
+  console.log(`Sesiones HOY viernes (28): ${horariosViernes.length}`);
   console.log('Seed completado!');
 }
 

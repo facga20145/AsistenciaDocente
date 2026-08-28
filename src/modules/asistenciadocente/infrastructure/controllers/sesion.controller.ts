@@ -5,6 +5,7 @@ import { IniciarClaseUseCase } from '../../application/use-cases/sesion/iniciar-
 import { FinalizarClaseUseCase } from '../../application/use-cases/sesion/finalizar-clase.use-case';
 import { ListarSesionesHoyUseCase } from '../../application/use-cases/sesion/listar-sesiones-hoy.use-case';
 import { MarcarAusentesTardanzasUseCase } from '../../application/use-cases/sesion/marcar-ausentes-tardanzas.use-case';
+import { SesionClaseResponseDto } from '../../application/dtos/sesion/sesion-response.dto';
 
 @ApiTags('Sesiones de Clase')
 @Controller('sesiones')
@@ -23,7 +24,9 @@ export class SesionController {
     description: 'Crea las instancias de sesiones_clase a partir de los horarios activos para el día actual. Idempotente: no duplica sesiones existentes.',
   })
   generarDelDia() {
-    return this.generarSesionesUC.execute();
+    return this.generarSesionesUC
+      .execute()
+      .then((sesiones) => sesiones.map((s) => SesionClaseResponseDto.fromEntity(s)));
   }
 
   @Get('hoy')
@@ -38,10 +41,12 @@ export class SesionController {
   @Post(':id/iniciar')
   @ApiOperation({
     summary: 'Iniciar clase',
-    description: 'Marca la sesión como INICIADA y registra horaEntradaReal = NOW(). Solo permite iniciar desde estado PROGRAMADA o TARDANZA.',
+    description:
+      'Marca la sesión como INICIADA y registra horaEntradaReal = NOW(). Permite iniciar desde PROGRAMADA, TARDANZA o AUSENTE (llegada tardía manual).',
   })
-  iniciar(@Param('id', ParseIntPipe) id: number) {
-    return this.iniciarClaseUC.execute(id);
+  async iniciar(@Param('id', ParseIntPipe) id: number) {
+    const sesion = await this.iniciarClaseUC.execute(id);
+    return SesionClaseResponseDto.fromEntity(sesion);
   }
 
   @Post(':id/finalizar')
@@ -49,8 +54,9 @@ export class SesionController {
     summary: 'Finalizar clase',
     description: 'Marca la sesión como FINALIZADA y registra horaSalidaReal = NOW(). Solo permite finalizar desde estado INICIADA.',
   })
-  finalizar(@Param('id', ParseIntPipe) id: number) {
-    return this.finalizarClaseUC.execute(id);
+  async finalizar(@Param('id', ParseIntPipe) id: number) {
+    const sesion = await this.finalizarClaseUC.execute(id);
+    return SesionClaseResponseDto.fromEntity(sesion);
   }
 
   @Post('marcar-ausentes-tardanzas')
