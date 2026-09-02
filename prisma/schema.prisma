@@ -11,8 +11,8 @@ model Docente {
   id           Int       @id @default(autoincrement())
   nombres      String
   apellidos    String
-  dni          String    @unique
-  correo       String?   @unique
+  dni          String?   @unique
+  correo       String    @unique
   estadoActivo Boolean   @default(true)
   horarios     Horario[]
   createdAt    DateTime  @default(now())

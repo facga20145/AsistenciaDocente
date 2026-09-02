@@ -12,9 +12,11 @@ export class CrearDocenteUseCase {
   ) {}
 
   async execute(dto: CrearDocenteDto): Promise<DocenteEntity> {
-    const existe = await this.docenteRepo.existeDni(dto.dni);
-    if (existe) {
-      throw new ConflictError(`Ya existe un docente con DNI ${dto.dni}`);
+    if (dto.dni) {
+      const existe = await this.docenteRepo.existeDni(dto.dni);
+      if (existe) {
+        throw new ConflictError(`Ya existe un docente con DNI ${dto.dni}`);
+      }
     }
     return this.docenteRepo.crear(dto);
   }

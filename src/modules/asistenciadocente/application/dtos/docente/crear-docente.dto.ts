@@ -12,13 +12,12 @@ export class CrearDocenteDto {
   @MinLength(2)
   apellidos: string;
 
-  @ApiProperty({ example: '12345678' })
-  @IsString()
-  @MinLength(8)
-  dni: string;
-
-  @ApiPropertyOptional({ example: 'juan.perez@institucion.edu.pe' })
+  @ApiPropertyOptional({ example: '12345678' })
   @IsOptional()
+  @IsString()
+  dni?: string;
+
+  @ApiProperty({ example: 'juan.perez@institucion.edu.pe' })
   @IsEmail()
-  correo?: string;
+  correo: string;
 }

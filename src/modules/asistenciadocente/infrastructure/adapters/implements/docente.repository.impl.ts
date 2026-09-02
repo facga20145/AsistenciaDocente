@@ -7,7 +7,7 @@ import { PrismaService } from '../../config/prisma.service';
 export class PrismaDocenteRepository implements DocenteRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async crear(data: { nombres: string; apellidos: string; dni: string; correo?: string }): Promise<DocenteEntity> {
+  async crear(data: { nombres: string; apellidos: string; dni?: string; correo: string }): Promise<DocenteEntity> {
     const docente = await this.prisma.docente.create({ data });
     return new DocenteEntity(docente);
   }
